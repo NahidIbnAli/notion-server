@@ -34,6 +34,7 @@ const taskSchema = new mongoose.Schema({
   taskText: String,
   taskImage: String,
   email: String,
+  completed: Boolean,
   createdAt: {
     type: Date,
     default: Date.now,
@@ -69,6 +70,7 @@ app.post("/tasks", async (req, res) => {
       taskText: req.body.taskText,
       taskImage: req.body.taskImage,
       email: req.body.email,
+      completed: req.body.completed,
     });
     const result = await newTask.save();
     res.status(200).send(result);
@@ -77,10 +79,12 @@ app.post("/tasks", async (req, res) => {
   }
 });
 
-app.get("/tasks/:email", async (req, res) => {
+app.get("/tasks", async (req, res) => {
   try {
-    const email = req.params.email;
-    const tasks = await Task.find({ email: email });
+    const tasks = await Task.find({
+      email: req.query.email,
+      completed: req.query.completed,
+    });
     if (tasks) {
       res.status(200).send(tasks);
     } else {
@@ -107,7 +111,7 @@ app.delete("/tasks/:id", async (req, res) => {
   }
 });
 
-app.put("/tasks/:id", async (req, res) => {
+app.patch("/tasks/:id", async (req, res) => {
   try {
     const updateTaskText = req.body.updateTaskText;
     const result = await Task.updateOne(
@@ -116,15 +120,49 @@ app.put("/tasks/:id", async (req, res) => {
         $set: {
           taskText: updateTaskText,
         },
-      },
-      {
-        upsert: true,
       }
     );
     if (result) {
       res.status(200).send(result);
     } else {
       res.status(404).send({ message: "task was not updated for this id" });
+    }
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+app.put("/tasks", async (req, res) => {
+  try {
+    const result = await Task.updateOne(
+      { _id: req.query.id },
+      {
+        $set: {
+          completed: true,
+        },
+      },
+      { upsert: true }
+    );
+    if (result) {
+      res.status(200).send(result);
+    } else {
+      res.status(404).send({ message: "task was not completed for this id" });
+    }
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+app.get("/completedtasks", async (req, res) => {
+  try {
+    const completedTasks = await Task.find({
+      email: req.query.email,
+      completed: req.query.completed,
+    });
+    if (completedTasks) {
+      res.status(200).send(completedTasks);
+    } else {
+      res.status(404).send({ message: "task not found" });
     }
   } catch (error) {
     res.status(500).send({ message: error.message });
