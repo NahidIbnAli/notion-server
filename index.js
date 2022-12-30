@@ -94,6 +94,20 @@ app.get("/tasks/:email", async (req, res) => {
   }
 });
 
+app.delete("/tasks/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const result = await Task.deleteOne({ _id: id });
+    if (result) {
+      res.status(200).send(result);
+    } else {
+      res.status(404).send({ message: "task was not deleted for this id" });
+    }
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
 app.get("/", async (req, res) => {
   res.send("notion server is on");
 });
