@@ -80,7 +80,6 @@ app.post("/tasks", async (req, res) => {
 app.get("/tasks/:email", async (req, res) => {
   try {
     const email = req.params.email;
-    console.log(email);
     const tasks = await Task.find({ email: email });
     if (tasks) {
       res.status(200).send(tasks);
@@ -102,6 +101,30 @@ app.delete("/tasks/:id", async (req, res) => {
       res.status(200).send(result);
     } else {
       res.status(404).send({ message: "task was not deleted for this id" });
+    }
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+app.put("/tasks/:id", async (req, res) => {
+  try {
+    const updateTaskText = req.body.updateTaskText;
+    const result = await Task.updateOne(
+      { _id: req.params.id },
+      {
+        $set: {
+          taskText: updateTaskText,
+        },
+      },
+      {
+        upsert: true,
+      }
+    );
+    if (result) {
+      res.status(200).send(result);
+    } else {
+      res.status(404).send({ message: "task was not updated for this id" });
     }
   } catch (error) {
     res.status(500).send({ message: error.message });
