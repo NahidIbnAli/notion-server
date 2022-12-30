@@ -11,7 +11,7 @@ app.use(express.json());
 app.use(cors());
 
 // database connection with mongoose
-const mongoAtlasUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wgjxpn1.mongodb.net/?retryWrites=true&w=majority`;
+const mongoAtlasUri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wgjxpn1.mongodb.net/notionDb?retryWrites=true&w=majority`;
 mongoose
   .connect(mongoAtlasUri, {
     useNewUrlParser: true,
@@ -29,10 +29,11 @@ const userSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
-// user schema
+// task schema
 const taskSchema = new mongoose.Schema({
   taskText: String,
   taskImage: String,
+  email: String,
   createdAt: {
     type: Date,
     default: Date.now,
@@ -41,29 +42,53 @@ const taskSchema = new mongoose.Schema({
 
 // user model
 const User = mongoose.model("Users", userSchema);
-// user model
-const Task = mongoose.model("Tasks", userSchema);
+// task model
+const Task = mongoose.model("Tasks", taskSchema);
 
 // application routes
-// app.use("/task", taskModel);
 app.post("/users", async (req, res) => {
   try {
-    const user = req.body.user;
-    res.status(200).send(user);
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
+      const newUser = new User({
+        name: req.body.name,
+        email: req.body.email,
+      });
+      const result = await newUser.save();
+      return res.status(200).send(result);
+    }
+    res.status(200).send({ message: "email already exists" });
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
 });
 
-// task routes
 app.post("/tasks", async (req, res) => {
   try {
     const newTask = new Task({
       taskText: req.body.taskText,
       taskImage: req.body.taskImage,
+      email: req.body.email,
     });
     const result = await newTask.save();
     res.status(200).send(result);
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
+app.get("/tasks/:email", async (req, res) => {
+  try {
+    const email = req.params.email;
+    console.log(email);
+    const tasks = await Task.find({ email: email });
+    if (tasks) {
+      res.status(200).send(tasks);
+    } else {
+      res.status(404).send({
+        message: "task not found",
+      });
+    }
   } catch (error) {
     res.status(500).send({ message: error.message });
   }
