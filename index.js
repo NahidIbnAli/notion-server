@@ -169,6 +169,29 @@ app.get("/completedtasks", async (req, res) => {
   }
 });
 
+app.put("/completedtasks", async (req, res) => {
+  try {
+    const result = await Task.updateOne(
+      { _id: req.query.id },
+      {
+        $set: {
+          completed: false,
+        },
+      },
+      { upsert: true }
+    );
+    if (result) {
+      res.status(200).send(result);
+    } else {
+      res
+        .status(404)
+        .send({ message: "task completed value was not updated for this id" });
+    }
+  } catch (error) {
+    res.status(500).send({ message: error.message });
+  }
+});
+
 app.get("/", async (req, res) => {
   res.send("notion server is on");
 });
