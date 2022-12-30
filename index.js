@@ -193,7 +193,7 @@ app.put("/completedtasks", async (req, res) => {
 });
 
 app.get("/", async (req, res) => {
-  res.send("notion server is on");
+  res.send("notion server is running");
 });
 
 app.listen(port, () => console.log(`notion server is running on port ${port}`));
